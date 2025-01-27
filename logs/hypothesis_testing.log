@@ -1,0 +1,24 @@
+2025-01-27 10:55:05,940 - hypothesis_testing - INFO - Received a request to perform Z-test.
+2025-01-27 10:55:07,310 - hypothesis_testing - ERROR - An error occurred: 'size'
+2025-01-27 11:02:06,157 - hypothesis_testing - INFO - Received a request to perform Z-test.
+2025-01-27 11:02:06,178 - hypothesis_testing - ERROR - An error occurred: 'size'
+2025-01-27 11:02:51,111 - hypothesis_testing - INFO - Received a request to perform Z-test.
+2025-01-27 11:03:03,198 - hypothesis_testing - INFO - Received a request to perform Z-test.
+2025-01-27 11:04:33,599 - hypothesis_testing - INFO - Received a request to perform Z-test.
+2025-01-27 11:04:33,618 - hypothesis_testing - ERROR - An error occurred: 'size'
+2025-01-27 11:05:20,841 - hypothesis_testing - INFO - Received a request to perform Z-test.
+2025-01-27 11:07:58,454 - hypothesis_testing - INFO - Received a request to perform Z-test.
+2025-01-27 11:07:58,473 - hypothesis_testing - ERROR - An error occurred: name 'confidence_interval' is not defined
+2025-01-27 11:08:49,099 - hypothesis_testing - INFO - Received a request to perform Z-test.
+2025-01-27 11:09:08,915 - hypothesis_testing - INFO - Received a request to perform Z-test.
+2025-01-27 11:09:10,028 - hypothesis_testing - ERROR - An error occurred: 'size'
+2025-01-27 11:12:11,774 - hypothesis_testing - INFO - Received a request to perform Z-test.
+2025-01-27 11:12:11,862 - hypothesis_testing - ERROR - An error occurred: 'size'
+2025-01-27 11:12:14,302 - hypothesis_testing - INFO - Received a request to perform Z-test.
+2025-01-27 11:12:14,337 - hypothesis_testing - ERROR - An error occurred: 'size'
+2025-01-27 11:14:20,850 - hypothesis_testing - INFO - Received a request to perform Z-test.
+2025-01-27 11:32:52,935 - hypothesis_testing - ERROR - Error during two-sample Z-test: 'mean1'
+2025-01-27 11:36:54,767 - hypothesis_testing - ERROR - Error during two-sample Z-test: Input file must contain exactly 2 rows and 2 columns.
+2025-01-27 11:58:38,740 - hypothesis_testing - ERROR - Error during two-sample Z-test: Input file must contain exactly 2 rows and 6 columns.
+2025-01-27 12:00:47,417 - hypothesis_testing - ERROR - Error during two-sample Z-test: single positional indexer is out-of-bounds
+2025-01-27 12:02:26,521 - hypothesis_testing - ERROR - Error during two-sample Z-test: Input file must contain at least two rows of data.
