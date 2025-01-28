@@ -10,6 +10,10 @@ two_sample_z_test = Blueprint('two_sample_z_test', __name__)
 @two_sample_z_test.route('/', methods=['POST'])
 def two_sample_z_test_func():
     try:
+
+         # Log the request
+        logger.info("Received a request to perform two sample Z-test.")
+
         # Check if JSON or file input is provided
         if request.is_json:
             data = request.get_json()

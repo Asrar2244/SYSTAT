@@ -1,6 +1,8 @@
 from flask import Blueprint, request, jsonify
 from scipy.stats import t
 import math
+from app.logger import logger
+
 
 # Blueprint setup
 t_test_api = Blueprint("t_test_api", __name__)
@@ -52,6 +54,10 @@ def generate_t_distribution_data(df, x_range=(-5, 5), step=0.1):
 @t_test_api.route('/one_sample_ttest', methods=['POST'])
 def one_sample_t_test():
     try:
+
+         # Log the request
+        logger.info("Received a request to perform one sample t-test.")
+
         # Extract data from request
         data = request.json
         if not data:
@@ -127,4 +133,5 @@ def one_sample_t_test():
         }), 200
 
     except Exception as e:
+        logger.error(f"Error during one-sample t-test: {str(e)}")
         return jsonify({"error": str(e)}), 500

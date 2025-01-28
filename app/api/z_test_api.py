@@ -3,6 +3,8 @@ from scipy.stats import norm
 import math
 from app.utils import read_input_data, prepare_output_data
 from app.logger import logger
+from app import create_app  # Instead of from run import create_app
+
 
 z_test_api = Blueprint('z_test_api', __name__)
 

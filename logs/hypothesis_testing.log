@@ -22,3 +22,14 @@
 2025-01-27 11:58:38,740 - hypothesis_testing - ERROR - Error during two-sample Z-test: Input file must contain exactly 2 rows and 6 columns.
 2025-01-27 12:00:47,417 - hypothesis_testing - ERROR - Error during two-sample Z-test: single positional indexer is out-of-bounds
 2025-01-27 12:02:26,521 - hypothesis_testing - ERROR - Error during two-sample Z-test: Input file must contain at least two rows of data.
+2025-01-28 06:00:20,892 - hypothesis_testing - INFO - Received a request to perform one sample t-test.
+2025-01-28 06:00:54,420 - hypothesis_testing - INFO - Received a request to perform two sample Z-test.
+2025-01-28 06:00:58,692 - hypothesis_testing - INFO - Received a request to perform two sample Z-test.
+2025-01-28 06:00:58,695 - hypothesis_testing - ERROR - Error during two-sample Z-test: Error processing input data: '_io.BytesIO' object has no attribute 'get'
+2025-01-28 06:01:55,060 - hypothesis_testing - INFO - Received a request to perform two sample Z-test.
+2025-01-28 06:01:55,062 - hypothesis_testing - ERROR - Error during two-sample Z-test: Error processing input data: '_io.BytesIO' object has no attribute 'get'
+2025-01-28 06:02:38,795 - hypothesis_testing - INFO - Received a request to perform two sample Z-test.
+2025-01-28 06:02:38,799 - hypothesis_testing - ERROR - Error during two-sample Z-test: Error processing input data: '_io.BytesIO' object has no attribute 'get'
+2025-01-28 06:02:40,243 - hypothesis_testing - INFO - Received a request to perform two sample Z-test.
+2025-01-28 06:02:40,247 - hypothesis_testing - ERROR - Error during two-sample Z-test: Error processing input data: '_io.BytesIO' object has no attribute 'get'
+2025-01-28 06:02:49,523 - hypothesis_testing - INFO - Received a request to perform two sample Z-test.
