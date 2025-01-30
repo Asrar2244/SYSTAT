@@ -61,6 +61,59 @@ def validate_two_sample_input(data):
         'n2': int(row['n2']),
     }
 
+def validate_paired_t_test_input(groups):
+    """
+    Validate the input data for the paired t-test.
+    Ensures the 'before' and 'after' data are present and have the same length.
+    """
+    before = groups.get('before')
+    after = groups.get('after')
+    
+    # Check that 'before' and 'after' are lists and have the same length
+    if not isinstance(before, list) or not isinstance(after, list):
+        raise ValueError("Both 'before' and 'after' must be lists.")
+    
+    if len(before) != len(after):
+        raise ValueError("'before' and 'after' lists must have the same length.")
+    
+    return {"data": {"before": before, "after": after}}
+
+def validate_two_sample_t_test_input(data):
+    """
+    Validates input data for a two-sample t-test.
+    """
+    try:
+        if not isinstance(data, dict):
+            raise ValueError("Input data must be a dictionary.")
+        
+        if "group1" not in data or "group2" not in data:
+            raise ValueError("Missing required fields: 'group1' and 'group2'.")
+        
+        group1, group2 = data["group1"], data["group2"]
+        
+        if not isinstance(group1, list) or not isinstance(group2, list):
+            raise ValueError("Both 'group1' and 'group2' must be lists of numbers.")
+        
+        if len(group1) < 2 or len(group2) < 2:
+            raise ValueError("Each group must contain at least two values.")
+        
+        if not all(isinstance(x, (int, float)) for x in group1 + group2):
+            raise ValueError("All values in 'group1' and 'group2' must be numeric.")
+        
+        alternative = data.get("alternative", "two-sided")
+        if alternative not in ["two-sided", "greater", "less"]:
+            raise ValueError("Invalid alternative hypothesis. Choose from 'two-sided', 'greater', or 'less'.")
+        
+        confidence = data.get("confidence", 0.95)
+        if not (0 < confidence < 1):
+            raise ValueError("Confidence level must be between 0 and 1.")
+        
+        return {"data": {"group1": group1, "group2": group2}, "alternative": alternative, "confidence": confidence}
+    
+    except Exception as e:
+        raise ValueError(f"Validation error: {str(e)}")
+
+
 # ---------------------------------------------
 # Output Data Preparation
 # ---------------------------------------------
