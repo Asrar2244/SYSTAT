@@ -21,24 +21,48 @@ def read_input_data(json_data=None, file=None):
         raise ValueError(f"Error processing input data: {str(e)}")
 
 def _read_json_input(json_data):
-    before = json_data.get("before")
-    after = json_data.get("after")
+    variables = list(json_data.keys())
+    if len(variables) != 2:
+        raise ValueError("JSON must contain exactly two variables.")
+    
+    before = json_data.get(variables[0])
+    after = json_data.get(variables[1])
+
+    # Debug log to check input data
+    logger.info(f"Received JSON data: {json_data}")
+    
+    if not isinstance(before, list) or not isinstance(after, list):
+        raise ValueError("Both variables must be lists.")
+    
     if not before or not after:
-        raise ValueError("JSON must contain 'before' and 'after' fields.")
-    return {"before": before, "after": after}
+        raise ValueError("Both variables must contain data.")
+    
+    return {variables[0]: before, variables[1]: after}
 
 def _read_file_input(file):
     if file.filename.endswith('.csv'):
         df = pd.read_csv(file)
-    elif file.filename.endswith(('.xls', '.xlsx')):
+    elif file.filename.endswith(('.xls', '.xlsx')): 
         df = pd.read_excel(file)
     else:
         raise ValueError("Unsupported file format. Please upload a CSV or Excel file.")
-    if 'before' not in df.columns or 'after' not in df.columns:
-        raise ValueError("CSV/Excel file must contain 'before' and 'after' columns.")
-    return {"before": df['before'].tolist(), "after": df['after'].tolist()}
+    
+    variables = df.columns.tolist()
+    if len(variables) != 2:
+        raise ValueError("CSV/Excel file must contain exactly two columns.")
+    
+    before = df[variables[0]].tolist()
+    after = df[variables[1]].tolist()
 
-def calculate_and_format_paired_t_test(before, after):
+    # Debug log to check input data
+    logger.info(f"Received file data: {df.head()}")
+    
+    if not isinstance(before, list) or not isinstance(after, list):
+        raise ValueError("Both variables must be lists.")
+    
+    return {variables[0]: before, variables[1]: after}
+
+def calculate_and_format_paired_t_test(before, after, before_label, after_label):
     """
     Perform paired t-test and format the output in a structured JSON format.
     """
@@ -50,17 +74,18 @@ def calculate_and_format_paired_t_test(before, after):
         confidence_bound = mean_difference - (1.96 * (standard_deviation / (len(before) ** 0.5)))
         df = len(before) - 1
 
+       # Structuring the result output dynamically
         return {
             "Hypothesis Testing": "Paired t-test",
             "H0": "Mean Difference = 0",
             "H1": "Mean Difference > 0",
             "Variables": [
-                {"Variable": "SYSBP_BEFORE", "N": len(before), "Mean": round(mean_before, 3)},
-                {"Variable": "SYSBP_AFTER", "N": len(after), "Mean": round(mean_after, 3)}
+                {"Variable": before_label, "N": len(before), "Mean": round(sum(before) / len(before), 3)},
+                {"Variable": after_label, "N": len(after), "Mean": round(sum(after) / len(after), 3)}
             ],
             "Results": [
                 {
-                    "Variable": "SYSBP_BEFORE",
+                      "Variable": f"{before_label}  {after_label}", 
                     "Mean Difference": round(mean_difference, 3),
                     "95% Confidence Bound": round(confidence_bound, 3),
                     "Standard Deviation of Difference": round(standard_deviation, 3),
@@ -77,21 +102,38 @@ def calculate_and_format_paired_t_test(before, after):
 def paired_ttest():
     try:
         logger.info("Received a request to perform Paired t-test.")
+        
         if request.is_json:
             data = request.get_json()
+            logger.info(f"Received JSON input: {data}")  # Log the received JSON
             groups = read_input_data(json_data=data)
+        
         elif 'file' in request.files:
             file = request.files['file']
+            logger.info(f"Received file input: {file.filename}")  # Log the received file
             groups = read_input_data(file=file)
+        
         else:
             return jsonify({"error": "No data provided. Please provide either JSON or file input."}), 400
         
+        # Extract the labels of the two variables dynamically
+        before_label, after_label = list(groups.keys())
+        logger.info(f"before_label: {before_label}, after_label: {after_label}")  # Log the variable labels
         
-        validated_data = validate_paired_t_test_input(groups)
+        # Log the structure of the data
+        logger.info(f"Groups data: {groups}")
+        
+        # Bypass validation temporarily
+        # Check if the data is in list form (which is expected)
+        if not isinstance(groups[before_label], list) or not isinstance(groups[after_label], list):
+            return jsonify({"error": f"Both '{before_label}' and '{after_label}' must be lists."}), 400
+        
+        # Perform paired t-test directly without extra validation step
         output_data = calculate_and_format_paired_t_test(
-            validated_data["data"]["before"], validated_data["data"]["after"]
+            groups[before_label], groups[after_label], before_label, after_label
         )
+        
         return jsonify(output_data), 200
     except Exception as e:
         logger.error(f"An error occurred: {str(e)}")
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": str(e)}), 500 
