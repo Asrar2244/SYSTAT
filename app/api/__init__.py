@@ -15,8 +15,8 @@ def create_app():
     from app.api.two_sample_z_test_api import two_sample_z_test
     app.register_blueprint(two_sample_z_test, url_prefix='/api')
 
-    # Import and register one_sample_t_test blueprint
-    from app.api.One_sample_t_test_api import t_test_api  # Updated file name
+    # Import inside function to avoid circular import
+    from app.api.One_sample_t_test_api import t_test_api
     app.register_blueprint(t_test_api, url_prefix='/ttest')
 
     # Import blueprint inside create_app to avoid circular imports
