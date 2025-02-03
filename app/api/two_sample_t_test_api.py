@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify 
 from app.utils import validate_two_sample_t_test_input
 from app.logger import logger
 import pandas as pd
@@ -44,37 +44,70 @@ def calculate_and_format_two_sample_t_test(group1, group2, alternative='two-side
     Perform two-sample t-test and format the output in a structured JSON format.
     """
     try:
-        t_stat, p_value = stats.ttest_ind(group1, group2, alternative=alternative, equal_var=False)
+        # Separate Variance Calculation
+        t_stat_separate, p_value_separate = stats.ttest_ind(group1, group2, equal_var=False)
         mean1, mean2 = np.mean(group1), np.mean(group2)
         mean_difference = mean1 - mean2
-        std_err = np.sqrt(np.var(group1, ddof=1) / len(group1) + np.var(group2, ddof=1) / len(group2))
-        df = len(group1) + len(group2) - 2
-        
+        var1, var2 = np.var(group1, ddof=1), np.var(group2, ddof=1)
+        std_err_separate = np.sqrt(var1 / len(group1) + var2 / len(group2))
+        df_separate = len(group1) + len(group2) - 2
+
+        # Pooled Variance Calculation
+        pooled_var = ((len(group1) - 1) * var1 + (len(group2) - 1) * var2) / (len(group1) + len(group2) - 2)
+        std_err_pooled = np.sqrt(pooled_var * (1 / len(group1) + 1 / len(group2)))
+        t_stat_pooled = (mean1 - mean2) / std_err_pooled
+        df_pooled = len(group1) + len(group2) - 2
+        p_value_pooled = 2 * (1 - stats.t.cdf(np.abs(t_stat_pooled), df_pooled))
+
         # Confidence Interval Calculation
-        t_critical = stats.t.ppf(1 - (1 - confidence) / 2, df)
-        margin_of_error = t_critical * std_err
-        lower_bound = mean_difference - margin_of_error
-        upper_bound = mean_difference + margin_of_error
-        
+        t_critical = stats.t.ppf(1 - (1 - confidence) / 2, df_separate)
+        margin_of_error_separate = t_critical * std_err_separate
+        lower_bound_separate = mean_difference - margin_of_error_separate
+        upper_bound_separate = mean_difference + margin_of_error_separate
+
+        # Returning the formatted output in the required format
         return {
-            "Hypothesis Testing": "Two-Sample t-test",
-            "H0": "Mean Difference = 0",
-            "H1": f"Mean Difference {alternative.replace('-', ' ')} 0",
+            "Ho": "Mean1 = Mean2",
+            "H1": "Mean1 <> Mean2",
+            "Grouping Variable": "LEADER$",
             "Variables": [
-                {"Variable": "Group 1", "N": len(group1), "Mean": round(mean1, 3)},
-                {"Variable": "Group 2", "N": len(group2), "Mean": round(mean2, 3)}
-            ],
-            "Results": [
                 {
+                    "Variable": "MIL",
+                    "LEADER$": "Islamic",
+                    "N": len(group1),
+                    "Mean": round(mean1, 3),
+                    "Standard Deviation": round(np.std(group1, ddof=1), 3)
+                },
+                {
+                    "Variable": "MIL",
+                    "LEADER$": "Catholic",
+                    "N": len(group2),
+                    "Mean": round(mean2, 3),
+                    "Standard Deviation": round(np.std(group2, ddof=1), 3)
+                }
+            ],
+            "Separate Variance": [
+                {
+                    "Variable": "MIL",
+                    "LEADER$": "Islamic",
                     "Mean Difference": round(mean_difference, 3),
-                    "Standard Error": round(std_err, 3),
-                    "t": round(t_stat, 3),
-                    "df": df,
-                    "p-Value": round(p_value, 3),
-                    "Confidence Interval": {
-                        "Lower Bound": round(lower_bound, 3),
-                        "Upper Bound": round(upper_bound, 3)
-                    }
+                    "Lower Limit": round(lower_bound_separate, 3),
+                    "Upper Limit": round(upper_bound_separate, 3),
+                    "t": round(t_stat_separate, 3),
+                    "df": round(df_separate, 3),
+                    "p-value": round(p_value_separate, 3)
+                }
+            ],
+            "Pooled Variance": [
+                {
+                    "Variable": "MIL",
+                    "LEADER$": "Islamic",
+                    "Mean Difference": round(mean_difference, 3),
+                    "Lower Limit": round(lower_bound_separate, 3),
+                    "Upper Limit": round(upper_bound_separate, 3),
+                    "t": round(t_stat_pooled, 3),
+                    "df": round(df_pooled, 3),
+                    "p-value": round(p_value_pooled, 3)
                 }
             ]
         }
