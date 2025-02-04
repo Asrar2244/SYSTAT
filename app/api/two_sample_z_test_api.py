@@ -1,8 +1,8 @@
-import math
 import pandas as pd
-from scipy.stats import norm
 from flask import Blueprint, request, jsonify
-from app.utils import read_input_data, prepare_output_data
+from statsmodels.stats.weightstats import ztest
+from scipy.stats import norm
+from app.utils import read_input_data
 from app.logger import logger
 
 # Initialize the Blueprint
@@ -27,58 +27,44 @@ def perform_two_sample_z_test():
         # Extract parameters
         column = data.get('column')
         group_col = data.get('group_column')
-        std1 = float(data.get('std1', 0))
-        std2 = float(data.get('std2', 0))
         confidence = float(data.get('confidence', 0.95))
-        alternative = data.get('alternative', 'NE').upper()
+        alternative = data.get('alternative', 'two-sided').lower()
         
-        logger.info(f"Parameters: column={column}, group_col={group_col}, std1={std1}, std2={std2}, confidence={confidence}, alternative={alternative}")
-        
-        if std1 <= 0 or std2 <= 0:
-            logger.error("Standard deviations must be greater than zero.")
-            return jsonify({"error": "Standard deviations must be greater than zero."}), 400
+        logger.info(f"Parameters: column={column}, group_col={group_col}, confidence={confidence}, alternative={alternative}")
         
         # Convert data to DataFrame
         df = pd.DataFrame(data['data'])
         
-        # Compute means and counts for the two groups
-        grouped = df.groupby(group_col)[column].agg(['mean', 'count'])
-        if len(grouped) != 2:
+        # Ensure there are exactly two groups
+        groups = df[group_col].unique()
+        if len(groups) != 2:
             logger.error("Invalid grouping variable. Ensure exactly two groups.")
             return jsonify({"error": "Invalid grouping variable. Ensure exactly two groups."}), 400
         
-        (mean1, n1), (mean2, n2) = grouped[['mean', 'count']].values
+        # Separate the data into two groups
+        group1_data = df[df[group_col] == groups[0]][column]
+        group2_data = df[df[group_col] == groups[1]][column]
         
-        # Compute Z-score
-        pooled_std = math.sqrt((std1 ** 2 / n1) + (std2 ** 2 / n2))
-        z_score = (mean1 - mean2) / pooled_std
-        
-        # Compute p-value based on alternative hypothesis
-        if alternative == 'NE':  # Two-tailed test
-            p_value = 2 * (1 - norm.cdf(abs(z_score)))
-        elif alternative == 'LT':  # One-tailed test (mean1 < mean2)
-            p_value = norm.cdf(z_score)
-        else:  # One-tailed test (mean1 > mean2)
-            p_value = 1 - norm.cdf(z_score)
+        # Perform two-sample Z-test
+        z_stat, p_value = ztest(group1_data, group2_data, alternative=alternative)
         
         # Compute confidence interval
+        mean_diff = group1_data.mean() - group2_data.mean()
+        std_err = (group1_data.std()**2 / len(group1_data) + group2_data.std()**2 / len(group2_data))**0.5
         z_critical = norm.ppf(1 - (1 - confidence) / 2)
-        mean_diff = mean1 - mean2
-        ci_low = mean_diff - z_critical * pooled_std
-        ci_high = mean_diff + z_critical * pooled_std
+        ci_low = mean_diff - z_critical * std_err
+        ci_high = mean_diff + z_critical * std_err
         
         # Conclusion
         conclusion = "Significant difference between the means." if p_value < (1 - confidence) else "No significant difference between the means."
         
         # Prepare results
         results = {
-            "hypothesis": f"Ho: Mean1 = Mean2 vs H1: Mean1 {'<>' if alternative == 'NE' else ('<' if alternative == 'LT' else '>')} Mean2",
+            "hypothesis": f"Ho: Mean1 = Mean2 vs H1: Mean1 {'!=' if alternative == 'two-sided' else ('<' if alternative == 'smaller' else '>')} Mean2",
             "grouping_variable": group_col,
-            "sd1": std1,
-            "sd2": std2,
             "summary": {
-                "Group1": {"N": n1, "Mean": mean1},
-                "Group2": {"N": n2, "Mean": mean2}
+                f"{groups[0]}": {"N": len(group1_data), "Mean": group1_data.mean()},
+                f"{groups[1]}": {"N": len(group2_data), "Mean": group2_data.mean()}
             },
             "confidence_interval": {
                 "confidence_level": confidence,
@@ -86,7 +72,7 @@ def perform_two_sample_z_test():
                 "lower_bound": ci_low,
                 "upper_bound": ci_high
             },
-            "z_score": z_score,
+            "z_stat": z_stat,
             "p_value": p_value,
             "conclusion": conclusion
         }
