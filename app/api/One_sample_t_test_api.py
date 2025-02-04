@@ -55,36 +55,45 @@ def calculate_one_sample_t_test(sample, population_mean, alternative="two-sided"
         sample_std = np.std(sample, ddof=1)
         df = sample_size - 1
         t_stat, p_value = stats.ttest_1samp(sample, population_mean)
-
+        
+        # Normality Test (Shapiro-Wilk)
+        shapiro_test_stat, shapiro_p_value = stats.shapiro(sample)
+        normality_test_result = "Passed" if shapiro_p_value > 0.05 else "Failed"
+        
         if alternative == "greater":
             p_value = 1 - stats.t.cdf(t_stat, df)
         elif alternative == "less":
             p_value = stats.t.cdf(t_stat, df)
         else:
             p_value = 2 * (1 - stats.t.cdf(abs(t_stat), df))
-
+        
         t_critical = stats.t.ppf(1 - (1 - confidence) / 2, df)
         margin_of_error = t_critical * (sample_std / np.sqrt(sample_size))
         lower_bound = sample_mean - margin_of_error
         upper_bound = sample_mean + margin_of_error
 
         return {
-            "Hypothesis Testing": "One-Sample t-test",
-            "H0": f"Mean = {population_mean}",
-            "H1": f"Mean {alternative.replace('-', ' ')} {population_mean}",
+            "Test Type": "One-Sample t-test",
+            "Normality Test (Shapiro-Wilk)": {
+                "Result": normality_test_result,
+                "P-Value": round(shapiro_p_value, 3)
+            },
             "Sample Statistics": {
                 "Sample Size": sample_size,
                 "Sample Mean": round(sample_mean, 3),
                 "Sample Std Dev": round(sample_std, 3),
+                "Standard Error of Mean": round(sample_std / np.sqrt(sample_size), 3),
                 "Degrees of Freedom": df,
+                "Hypothesized Population Mean": population_mean,
                 "t-Statistic": round(t_stat, 3),
-                "p-Value": round(p_value, 3),
-                "Confidence Interval": {
+                "Two-tailed P-Value": round(p_value, 3),
+                "One-tailed P-Value": round(p_value / 2, 3),
+                "95% Confidence Interval": {
                     "Lower Bound": round(lower_bound, 3),
-                    "Upper Bound": round(upper_bound, 3),
-                    "Confidence Level": confidence * 100
+                    "Upper Bound": round(upper_bound, 3)
                 }
-            }
+            },
+            "Conclusion": "The difference between the sample mean and the hypothesized mean is not large enough to reject the null hypothesis at the given significance level." if p_value > 0.05 else "The null hypothesis is rejected, indicating a significant difference."
         }
     except Exception as e:
         raise ValueError(f"Error in one-sample t-test calculation: {str(e)}")
